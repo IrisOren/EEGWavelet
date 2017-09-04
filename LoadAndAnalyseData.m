@@ -13,7 +13,7 @@ end
 %%
 %Initialise Variables
 
-PointsToSample=200000;
+PointsToSample=800000;
 NumWavelets = 10;
 MinFreq = 2;
 MaxFreq = 50;
@@ -23,7 +23,7 @@ MaxFreq = 50;
 %For each file, load the file and store n=PointsToSample of EEG in
 %DataArray
 if exist('DataArray')==1
-    clear(DataArray);
+    clear('DataArray');
 end
 
 
@@ -56,7 +56,7 @@ for k=1:N
 end
 %% 
 %Create morlet wavelets for transform
-i=6;
+i=8;
 [FreqList, n_data, n_convolution, n_conv_pow2, HalfWaveletSize, fftWaveletFamily]=CreateWavelet(DataArray(:,:,i), NumWavelets, MinFreq, MaxFreq, SamplingFreq);
 
 %% 

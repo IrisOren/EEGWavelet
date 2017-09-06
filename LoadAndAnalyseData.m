@@ -1,15 +1,18 @@
-DataStructNameChan0='EEGDev1ai0';
-DataStructNameChan1='EEGDev1ai1';
+%DataStructNameChan0='EEGDev1ai0';
+%DataStructNameChan1='EEGDev1ai1';
 
 %Convert all *.tdms files in folder 
 %simpleConvertTDMS writes .mat file
-FileListTDMS = dir('*.tdms');
-N = size(FileListTDMS,1);
 
-for k = 1:N
-    TempFileName=FileListTDMS(k).name;
-    TempTDMS=simpleConvertTDMS(TempFileName);
-end
+%Uncomment below if files need conversion
+%FileListTDMS = dir('*.tdms');
+%N = size(FileListTDMS,1);
+
+%for k = 1:N
+ %   TempFileName=FileListTDMS(k).name;
+ %   TempTDMS=simpleConvertTDMS(TempFileName);
+%end
+
 %%
 %Initialise Variables
 
@@ -24,10 +27,12 @@ MaxFreq = 50;
 %DataArray
 if exist('DataArray')==1
     clear('DataArray');
+    clear('RecordNameVector');
 end
 
 
 FileListM=dir('*.mat');
+
 N = size(FileListM,1);
 for k=1:N
     load(FileListM(k).name);
@@ -50,24 +55,36 @@ for k=1:N
     
     Data=Data(1:PointsToSample);
     DataArray(:, :, k)=Data;
- 
+    %RecordNameVector(k)=RecordName;
     %plot(0:SamplingFreq:LastTimePoint, Data)
             
 end
 %% 
 %Create morlet wavelets for transform
-i=8;
-[FreqList, n_data, n_convolution, n_conv_pow2, HalfWaveletSize, fftWaveletFamily]=CreateWavelet(DataArray(:,:,i), NumWavelets, MinFreq, MaxFreq, SamplingFreq);
+for i=1:N;
+    [FreqList, n_data, n_convolution, n_conv_pow2, HalfWaveletSize, fftWaveletFamily]=CreateWavelet(DataArray(:,:,i), NumWavelets, MinFreq, MaxFreq, SamplingFreq);
 
-%% 
-%Run Wavelet Transform
-WaveletData=RunWaveletTransform(NumWavelets, DataArray(:,:,i), n_data, n_convolution, n_conv_pow2, HalfWaveletSize, fftWaveletFamily);
 
-%%
-%Plot
-Times=linspace(0,(n_data-1)/SamplingFreq, n_data);
-figure; 
-subplot(2,1,1);
-contourf(Times, FreqList, squeeze(WaveletData(:, 1, :)), 40, 'linecolor','none');
-subplot(2,1,2);
-plot(Times, DataArray(:,:,i))
+    %Run Wavelet Transform
+    WaveletData=RunWaveletTransform(NumWavelets, DataArray(:,:,i), n_data, n_convolution, n_conv_pow2, HalfWaveletSize, fftWaveletFamily);
+
+
+    %Plot
+    RecordName=FileListM(i).name;
+    RecordName=strrep(RecordName, '.mat', '');   %Remove .mat suffix
+    RecordName=strrep(RecordName, ' ', '_');  %Replace spaces with _
+    RecordName=strrep(RecordName, '-', '_'); %Replace - with _
+    Filename=strcat('WaveletFigs/',RecordName,'.jpg');
+
+    Times=linspace(0,(n_data-1)/SamplingFreq, n_data);
+    figure; 
+    subplot(2,1,1);
+    contourf(Times, FreqList, squeeze(WaveletData(:, 1, :)), 40, 'linecolor','none');
+    subplot(2,1,2);
+    plot(Times, DataArray(:,:,i))
+    title(RecordName);
+
+    saveas(gcf, Filename);
+    
+    close
+end

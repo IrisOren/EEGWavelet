@@ -88,3 +88,62 @@ for i=1:N;
     
     close
 end
+
+%%
+%PSD and calculation of power in specified band btwn fMin and fMax
+fMin=10;
+fMax=30;
+PowerValues=zeros(N,1);
+for i=1:N
+    if exist('PSD', 'dir')==0
+        mkdir 'PSD'
+    end
+    [fy,f]=FFT(DataArray(:,:,i), SamplingFreq, 0);
+    RecordName=FileListM(i).name;
+    RecordName=strrep(RecordName, '.mat', '');   %Remove .mat suffix
+    RecordName=strrep(RecordName, ' ', '_');  %Replace spaces with _
+    RecordName=strrep(RecordName, '-', '_'); %Replace - with _
+    Filename=strcat('PSD/',RecordName,'.jpg');
+    saveas(gcf, Filename);
+    
+    IndexMin=min(find(f>fMin));
+    IndexMax=min(find(f>fMax));
+    fSubset=f(IndexMin:IndexMax);
+    % PSD
+    Power=fy.*conj(fy);
+    PowerSubset=Power(IndexMin:IndexMax);
+    PowerValues(i)=trapz(fSubset, PowerSubset);
+    
+    
+    
+    
+end
+Repetitions=N/2;
+figure; scatter([1:Repetitions], PowerValues(Repetitions+1:2*Repetitions)),
+xlabel('EEG sample time'),
+ylabel('Power in 10-30Hz');
+saveas(gcf, 'PSD/PSDSummary.jpg');
+
+%%
+%Morlet wavelet at 20Hz
+NumWavelets=1;
+MinFreq=20;
+MaxFreq=20;
+for i=1:N
+    if exist('SingleWavelet', 'dir')==0
+        mkdir 'SingleWavelet'
+    end
+    [FreqList, n_data, n_convolution, n_conv_pow2, HalfWaveletSize, fftWaveletFamily]=CreateWavelet(DataArray(:,:,i), NumWavelets, MinFreq, MaxFreq, SamplingFreq);
+    WaveletData=RunWaveletTransform(NumWavelets, DataArray(:,:,i), n_data, n_convolution, n_conv_pow2, HalfWaveletSize, fftWaveletFamily);
+    figure; plot(Times, squeeze(WaveletData(1, 1, :)));
+    RecordName=FileListM(i).name;
+    RecordName=strrep(RecordName, '.mat', '');   %Remove .mat suffix
+    RecordName=strrep(RecordName, ' ', '_');  %Replace spaces with _
+    RecordName=strrep(RecordName, '-', '_'); %Replace - with _
+    Filename=strcat('SingleWavelet/',RecordName,'.jpg');
+    saveas(gcf, Filename);
+    close
+
+
+    
+end   
